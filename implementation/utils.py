@@ -42,4 +42,5 @@ def save_data(prefix, data):
         os.makedirs(results_dir)
 
     for key, value in data.items():
-        np.savetxt("{}/{}.csv".format(results_dir, key), value, delimiter=',')
+        np.savetxt("{}/{}_train.csv".format(results_dir, key), value[0], delimiter=',')
+        np.savetxt("{}/{}_test.csv".format(results_dir, key), value[1], delimiter=',')

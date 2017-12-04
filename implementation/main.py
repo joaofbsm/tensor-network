@@ -77,82 +77,25 @@ def train_network(X, y, train_index, test_index, parameters, extra=False):
     return results.history
 
 
-def hidden_analysis(X, y, parameters, hidden_sizes, kfold):
-    """Analyze the perfomance of the network on varying hidden layer sizes."""
+def execute_experiment(name, variations, X, y, parameters, kfold):
 
     parameters = deepcopy(parameters)
     accuracy = {}
     
-    for hidden_size in hidden_sizes:
-        parameters["hidden_size"] = hidden_size
-        cv_accuracy = []  # Cross-validation accuracy
-
-        for train_index, test_index in kfold.split(X, y):
-            results = train_network(X, y, train_index, test_index, parameters)
-            cv_accuracy.append(results["acc"])
-
-        accuracy[hidden_size] = np.mean(cv_accuracy, axis=0)
-
-    utils.save_data("hidden", accuracy)
-
-
-def extra_analysis(X, y, parameters, extra_sizes, kfold):
-    """Analyze the perfomance of the network with one extra hidden layer."""
-    
-    parameters = deepcopy(parameters)
-    accuracy = {}
-    
-    for extra_size in extra_sizes:
-        parameters["extra_size"] = extra_size
-        cv_accuracy = []  # Cross-validation accuracy
-        
-        for train_index, test_index in kfold.split(X, y):
-            results = train_network(X, y, train_index, test_index, parameters, 
-                                    extra=True)
-            cv_accuracy.append(results["acc"])
-
-        accuracy[extra_size] = np.mean(cv_accuracy, axis=0)
-
-    utils.save_data("extra", accuracy)
-
-
-def learning_analysis(X, y, parameters, l_rates, kfold):
-    """Analyze the perfomance of the network on varying learning rates."""
-    
-    parameters = deepcopy(parameters)
-    accuracy = {}
-    
-    for l_rate in l_rates:
-        parameters["l_rate"] = l_rate
-        cv_accuracy = []  # Cross-validation accuracy
+    for variation in variations:
+        parameters[name] = variation
+        accuracy_train = []  # Cross-validation train accuracy
+        accuracy_test = []  # Cross-validation test accuracy
         
         for train_index, test_index in kfold.split(X, y):
             results = train_network(X, y, train_index, test_index, parameters)
-            cv_accuracy.append(results["acc"])
+            accuracy_train.append(results["acc"])
+            accuracy_test.append(results["val_acc"])
 
-        accuracy[l_rate] = np.mean(cv_accuracy, axis=0)
+        accuracy[variation] = (np.mean(accuracy_train, axis=0),
+                               np.mean(accuracy_test, axis=0))
 
-    utils.save_data("l_rate", accuracy)
-
-
-def batch_analysis(X, y, parameters, batch_sizes, kfold):
-    """Analyze the perfomance of the network on varying batch sizes."""
-    
-    parameters = deepcopy(parameters)
-    accuracy = {}
-    
-    for batch_size in batch_sizes:
-        parameters["batch_size"] = batch_size
-        cv_accuracy = []  # Cross-validation accuracy
-        
-        for train_index, test_index in kfold.split(X, y):
-            results = train_network(X, y, train_index, test_index, parameters)
-            cv_accuracy.append(results["acc"])
-
-        accuracy[batch_size] = np.mean(cv_accuracy, axis=0)
-
-    utils.save_data("batch_size", accuracy)
-
+    utils.save_data(name, accuracy)
 
 def balanced_analysis():
     """Analyze the perfomance of the network on a balanced dataset."""
@@ -164,7 +107,7 @@ def main(args):
     X, y = utils.load_dataset(args[1])
 
     parameters = {
-        "n_epochs": 150,  # Number of epochs
+        "n_epochs": 5,  # Number of epochs
         "batch_size": 100,  # Default batch size
         "l_rate": 1,  # Default learning rate
         "input_size": 8,  # Input layer size
@@ -173,24 +116,18 @@ def main(args):
         "output_size": 7,  # Output layer size
     }  
 
-    # Variable parameters
-    batch_sizes = [1, 10, 50, 100]  # Batch sizes
-    l_rates = [0.1, 0.5, 1, 10]  # Learning rates 
-    hidden_sizes = [10, 25, 50, 100]  # Hidden layer sizes
-    extra_sizes = [10, 25, 50, 100]  # Extra layer sizes
-
+    experiments = {
+        "batch_sizes": [1, 10, 50, 100],  # Batch sizes
+        "l_rates": [0.1, 0.5, 1, 10],  # Learning rates 
+        "hidden_sizes": [10, 25, 50, 100],  # Hidden layer sizes
+        "extra_sizes": [10, 25, 50, 100]  # Extra layer sizes
+    }
 
     # Generator for 3-fold cross-validation
     kfold = StratifiedKFold(n_splits=3, shuffle=True) 
 
-    hidden_analysis(X, y, parameters, hidden_sizes, kfold)
-
-    extra_analysis(X, y, parameters, extra_sizes, kfold)
-
-    learning_analysis(X, y, parameters, l_rates, kfold)
-
-    batch_analysis(X, y, parameters, batch_sizes, kfold)
-
+    for key, value in experiments.items():
+        execute_experiment(key, value, X, y, parameters, kfold)
 
 
 if __name__ == "__main__":
