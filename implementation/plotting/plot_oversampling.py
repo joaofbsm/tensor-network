@@ -27,27 +27,27 @@ plots_dir = "../../plots"
 name = "balanced"
 
 n_epochs = 200
-default_size = 50
+default_size = 15
 
-# Under sampled
+# Undersampled
 
 mean = np.loadtxt("{}/hidden_size/{}_train_mean.csv".format(results_dir, default_size),
                   delimiter=',')
-ax.plot(np.arange(n_epochs), mean, label="1 hidden layer training")
+ax.plot(np.arange(n_epochs), mean, label="Undersampled training")
 
 mean = np.loadtxt("{}/hidden_size/{}_test_mean.csv".format(results_dir, default_size),
                   delimiter=',')
-ax.plot(np.arange(n_epochs), mean, label="1 hidden layer testing")
+ax.plot(np.arange(n_epochs), mean, label="Undersampled testing")
 
-# Over sampled
+# Oversampled
 
 mean = np.loadtxt("{}/{}/{}_train_mean.csv".format(results_dir, name, default_size),
                   delimiter=',')
-ax.plot(np.arange(n_epochs), mean, label="2 hidden layers training")
+ax.plot(np.arange(n_epochs), mean, label="Oversampled training")
 
 mean = np.loadtxt("{}/{}/{}_test_mean.csv".format(results_dir, name, default_size),
                   delimiter=',')
-ax.plot(np.arange(n_epochs), mean, label="2 hidden layers testing")
+ax.plot(np.arange(n_epochs), mean, label="Oversampled testing")
 
 ax.legend(loc="upper left")
 

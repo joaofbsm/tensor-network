@@ -98,7 +98,7 @@ def execute_experiment(name, variations, X, y, parameters, kfold):
         accuracy_test = []  # Cross-validation test accuracy
         
         for train_index, test_index in kfold.split(X, y):
-            if name == "extra_sizes":
+            if name == "extra_size":
                 results = train_network(X, y, train_index, test_index, 
                                         parameters, True)    
             else:
@@ -141,7 +141,7 @@ def balanced_experiment(X, y, parameters, kfold):
         accuracy_train.append(results["acc"])
         accuracy_test.append(results["val_acc"])
 
-        accuracy[50] = {
+        accuracy[parameters["hidden_size"]] = {
             "train_mean": np.mean(accuracy_train, axis=0),
             "train_std": np.std(accuracy_train, axis=0),
             "test_mean": np.mean(accuracy_test, axis=0),
@@ -165,8 +165,8 @@ def main(args):
     }  
 
     experiments = {
-        "hidden_size": [10, 25, 50, 100],  # Hidden layer sizes
-        "extra_size": [10, 25, 50, 100],  # Extra layer sizes
+        "hidden_size": [5, 15, 50, 100],  # Hidden layer sizes
+        "extra_size": [5, 15, 50, 100],  # Extra layer sizes
         "l_rate": [0.1, 0.5, 1, 10],  # Learning rates 
         "batch_size": [1, 10, 50, 100]  # Batch sizes
     }

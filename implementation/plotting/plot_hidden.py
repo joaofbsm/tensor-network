@@ -27,7 +27,7 @@ plots_dir = "../../plots"
 name = "hidden_size"
 
 n_epochs = 200
-parameters = [10, 25, 50, 100]
+parameters = [5, 15, 50, 100]
 
 for value in parameters:
     mean = np.loadtxt("{}/{}/{}_train_mean.csv".format(results_dir, name, value),
