@@ -32,11 +32,11 @@ def train_network(X, y, train_index, test_index, parameters, extra=False):
     """Create and fit the MLP network
     
     Arguments:
-        X -- Dataset input instances
-        y -- Dataset output classes
-        train_index -- K-fold generated train indexes
-        test_index -- K-fold generated test indexes
-        parameters -- Neural network model parameters
+        X -- Dataset input instances.
+        y -- Dataset output classes.
+        train_index -- K-fold generated train indexes.
+        test_index -- K-fold generated test indexes.
+        parameters -- Neural network model parameters.
     
     Keyword arguments:
         extra -- Flag for the presence of extra hidden layer (default: {False})
@@ -78,6 +78,16 @@ def train_network(X, y, train_index, test_index, parameters, extra=False):
 
 
 def execute_experiment(name, variations, X, y, parameters, kfold):
+    """Train neural network for a set of different parameters and save results
+    
+    Arguments:
+        name -- Name of the parameter to be varied.
+        variations -- Variations of the parameter.
+        X -- Dataset input instances.
+        y -- Dataset output classes.
+        parameters --  Neural network model parameters.
+        kfold -- Object used to create k-folds for crossvalidation.
+    """
 
     parameters = deepcopy(parameters)
     accuracy = {}
@@ -88,47 +98,87 @@ def execute_experiment(name, variations, X, y, parameters, kfold):
         accuracy_test = []  # Cross-validation test accuracy
         
         for train_index, test_index in kfold.split(X, y):
-            results = train_network(X, y, train_index, test_index, parameters)
+            if name == "extra_sizes":
+                results = train_network(X, y, train_index, test_index, 
+                                        parameters, True)    
+            else:
+                results = train_network(X, y, train_index, test_index, 
+                                        parameters)
+
             accuracy_train.append(results["acc"])
             accuracy_test.append(results["val_acc"])
 
-        accuracy[variation] = (np.mean(accuracy_train, axis=0),
-                               np.mean(accuracy_test, axis=0))
+        accuracy[variation] = {
+            "train_mean": np.mean(accuracy_train, axis=0),
+            "train_std": np.std(accuracy_train, axis=0),
+            "test_mean": np.mean(accuracy_test, axis=0),
+            "test_std": np.std(accuracy_test, axis=0)
+        }
 
     utils.save_data(name, accuracy)
 
-def balanced_analysis():
-    """Analyze the perfomance of the network on a balanced dataset."""
+
+def balanced_experiment(X, y, parameters, kfold):
+    """Oversample the dataset to analyze the performanced on a balanced one
     
-    pass
+    Arguments:
+        X -- Dataset input instances.
+        y -- Dataset output classes.
+        parameters --  Neural network model parameters.
+        kfold -- Object used to create k-folds for crossvalidation.
+    """
+
+    accuracy = {}
+    
+    # Oversample data
+    X, y = RandomOverSampler().fit_sample(X, y)
+
+    accuracy_train = []  # Cross-validation train accuracy
+    accuracy_test = []  # Cross-validation test accuracy
+    
+    for train_index, test_index in kfold.split(X, y):
+        results = train_network(X, y, train_index, test_index, parameters)
+        accuracy_train.append(results["acc"])
+        accuracy_test.append(results["val_acc"])
+
+        accuracy[50] = {
+            "train_mean": np.mean(accuracy_train, axis=0),
+            "train_std": np.std(accuracy_train, axis=0),
+            "test_mean": np.mean(accuracy_test, axis=0),
+            "test_std": np.std(accuracy_test, axis=0)
+        }
+
+    utils.save_data("balanced", accuracy)
 
 
 def main(args):
     X, y = utils.load_dataset(args[1])
 
     parameters = {
-        "n_epochs": 5,  # Number of epochs
-        "batch_size": 100,  # Default batch size
-        "l_rate": 1,  # Default learning rate
+        "n_epochs": 200,  # Number of epochs
+        "batch_size": 50,  # Default batch size
+        "l_rate": 0.5,  # Default learning rate
         "input_size": 8,  # Input layer size
         "hidden_size": 50,  # Default hidden layer size
         "extra_size": 50,  # Default extra hidden layer size
-        "output_size": 7,  # Output layer size
+        "output_size": 7  # Output layer size
     }  
 
     experiments = {
-        "batch_sizes": [1, 10, 50, 100],  # Batch sizes
-        "l_rates": [0.1, 0.5, 1, 10],  # Learning rates 
-        "hidden_sizes": [10, 25, 50, 100],  # Hidden layer sizes
-        "extra_sizes": [10, 25, 50, 100]  # Extra layer sizes
+        "hidden_size": [10, 25, 50, 100],  # Hidden layer sizes
+        "extra_size": [10, 25, 50, 100],  # Extra layer sizes
+        "l_rate": [0.1, 0.5, 1, 10],  # Learning rates 
+        "batch_size": [1, 10, 50, 100]  # Batch sizes
     }
 
     # Generator for 3-fold cross-validation
     kfold = StratifiedKFold(n_splits=3, shuffle=True) 
 
     for key, value in experiments.items():
+        print("\nExecuting {}\n----------------------\n".format(key))
         execute_experiment(key, value, X, y, parameters, kfold)
 
+    balanced_experiment(X, y, parameters, kfold)
 
 if __name__ == "__main__":
     main(sys.argv)
